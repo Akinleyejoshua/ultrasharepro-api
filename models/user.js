@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   socketId: String,
   lastActive: Number,
   is_active: Boolean,
+  is_busy: Boolean,
 });
 
 const User = mongoose.model("user", userSchema);
