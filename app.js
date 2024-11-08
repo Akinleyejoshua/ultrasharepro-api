@@ -156,22 +156,9 @@ io.sockets.on("connection", (socket) => {
       }
     );
 
-    socket.on("call:is_busy", async ({ from, to, is_busy }) => {
-      // console.log(`${to} busy on ${from} call`)
-      // const toSocket = await user.findOne({ to });
-      // const fromSocket = await user.findOne({ from });
-    
-      // user.findByIdAndUpdate(toSocket._id, { is_busy });
-      // user.findByIdAndUpdate(fromSocket._id, { is_busy });
-    })
-
     socket.on("call:start", async ({ to, from, offer }) => {
       console.log(`Call request from ${from} to ${to}`);
       const toSocket = await user.findOne({ loginId: to });
-
-      // time = setInterval(() => {
-
-      // }, 1000);
 
       if (toSocket?.is_busy) {
         socket.emit("call:busy");
@@ -179,16 +166,14 @@ io.sockets.on("connection", (socket) => {
         io.to(toSocket?.socketId).emit("call:incomming", {
           from,
           offer,
+          to,
         });
       }
 
-      setTimeout(() => {
-        clearInterval(time);
-      }, 4000);
     });
 
     socket.on("call:screen:answer", async ({ to, answer }) => {
-      clearInterval(time);
+      
 
       console.log(`Screen Call answered by ${socket.id} to ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -202,7 +187,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:answer", async ({ to, answer }) => {
-      clearInterval(time);
+      
 
       console.log(`Call answered by ${socket.id} to ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -216,7 +201,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:screen:rejected", async ({ to, from }) => {
-      clearInterval(time);
+      
 
       console.log(`Screen Call rejected by ${from}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -229,7 +214,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:reject", async ({ to, from }) => {
-      clearInterval(time);
+      
 
       console.log(`Call rejected by ${from}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -240,7 +225,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("ice:screen", async ({ candidate, to }) => {
-      // clearInterval(time);
+      // 
 
       console.log(`Screen ICE candidate for ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -253,7 +238,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("ice:call", async ({ candidate, to }) => {
-      // clearInterval(time);
+      // 
 
       console.log(`ICE candidate for ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -266,7 +251,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("screen:end", async ({ to }) => {
-      clearInterval(time);
+      
 
       console.log(`Screen Call ended with ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -277,7 +262,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:end", async ({ to }) => {
-      clearInterval(time);
+      
 
       console.log(`Call ended with ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -288,7 +273,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("disconnect", async () => {
-      clearInterval(time);
+      
 
       console.log(`Socket disconnected: ${socket.id}`);
       const users = await user.find();
