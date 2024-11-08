@@ -148,7 +148,7 @@ io.sockets.on("connection", (socket) => {
         console.log(`Screen Call request from ${from} to ${to}`);
         const toSocket = await user.findOne({ loginId: to });
 
-        io.to(toSocket.socketId).emit("screen:incomming", {
+        io.to(toSocket?.socketId).emit("screen:incomming", {
           from,
           offer,
           isScreenShare,
