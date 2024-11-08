@@ -157,12 +157,12 @@ io.sockets.on("connection", (socket) => {
     );
 
     socket.on("call:is_busy", async ({ from, to, is_busy }) => {
-      console.log(`${to} busy on ${from} call`)
-      const toSocket = await user.findOne({ to });
-      const fromSocket = await user.findOne({ from });
+      // console.log(`${to} busy on ${from} call`)
+      // const toSocket = await user.findOne({ to });
+      // const fromSocket = await user.findOne({ from });
     
-      user.findByIdAndUpdate(toSocket._id, { is_busy });
-      user.findByIdAndUpdate(fromSocket._id, { is_busy });
+      // user.findByIdAndUpdate(toSocket._id, { is_busy });
+      // user.findByIdAndUpdate(fromSocket._id, { is_busy });
     })
 
     socket.on("call:start", async ({ to, from, offer }) => {
