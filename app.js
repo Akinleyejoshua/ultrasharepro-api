@@ -269,6 +269,7 @@ io.sockets.on("connection", (socket) => {
 
       if (toSocket) {
         io.to(toSocket.socketId).emit("user:disconnected");
+        io.to(toSocket.socketId).emit("screen:disconnected");
       }
     });
 
