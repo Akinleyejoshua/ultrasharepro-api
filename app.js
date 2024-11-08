@@ -10,6 +10,17 @@ const user = require("./models/user");
 
 db();
 
+let onCalls = {};
+
+const addToOnCalls = async (from, to) => {
+  const fromSocket = await user.findOne({ loginId: from });
+  const toSocket = await user.findOne({ loginId: to });
+
+  onCalls[to] = {
+    from: fromSocket?.socketId,
+    to: toSocket?.socketId,
+  };
+};
 
 io.sockets.on("error", (e) => console.log(e));
 
@@ -83,18 +94,17 @@ io.sockets.on("connection", (socket) => {
       if (toSocket?.is_busy) {
         socket.emit("call:busy");
       } else {
+        await addToOnCalls(from, to);
+
         io.to(toSocket?.socketId).emit("call:incomming", {
           from,
           offer,
           to,
         });
       }
-
     });
 
     socket.on("call:screen:answer", async ({ to, answer }) => {
-      
-
       console.log(`Screen Call answered by ${socket.id} to ${to}`);
       const toSocket = await user.findOne({ loginId: to });
 
@@ -107,8 +117,6 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:answer", async ({ to, answer }) => {
-      
-
       console.log(`Call answered by ${socket.id} to ${to}`);
       const toSocket = await user.findOne({ loginId: to });
 
@@ -121,8 +129,6 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:screen:rejected", async ({ to, from }) => {
-      
-
       console.log(`Screen Call rejected by ${from}`);
       const toSocket = await user.findOne({ loginId: to });
 
@@ -134,8 +140,6 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:reject", async ({ to, from }) => {
-      
-
       console.log(`Call rejected by ${from}`);
       const toSocket = await user.findOne({ loginId: to });
 
@@ -145,7 +149,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("ice:screen", async ({ candidate, to }) => {
-      // 
+      //
 
       console.log(`Screen ICE candidate for ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -158,7 +162,7 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("ice:call", async ({ candidate, to }) => {
-      // 
+      //
 
       console.log(`ICE candidate for ${to}`);
       const toSocket = await user.findOne({ loginId: to });
@@ -171,8 +175,6 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("screen:end", async ({ to }) => {
-      
-
       console.log(`Screen Call ended with ${to}`);
       const toSocket = await user.findOne({ loginId: to });
 
@@ -182,8 +184,6 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("call:end", async ({ to }) => {
-      
-
       console.log(`Call ended with ${to}`);
       const toSocket = await user.findOne({ loginId: to });
 
@@ -194,22 +194,22 @@ io.sockets.on("connection", (socket) => {
     });
 
     socket.on("disconnect", async () => {
-      
-
       console.log(`Socket disconnected: ${socket.id}`);
       const users = await user.find();
 
       // Remove user from users map
       for (const item of users) {
-        if (item?.socketId === socket.id) {
-          console.log(socket.id)
-          io.to(socket.id).emit("user:disconnected");
-          break;
-        }
+        io.to(onCalls[item?.loginId]?.from).emit("user:disconnected");
+        io.to(onCalls[item?.loginId]?.to).emit("user:disconnected"); 
       }
-
+      
+        await user.findOne({ socketId: socket?.id }).updateOne({
+          is_active: false,
+          lastActive: Date.now(),
+        });
+            
       // Broadcast updated user list
-      io.emit("users:get", users);
+      io.emit("users:get", await user.find());
     });
   } catch (err) {
     console.log(err);
