@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   lastActive: Number,
   is_active: Boolean,
   is_busy: Boolean,
+  pushSubscription: mongoose.Schema.Types.Mixed,
 });
 
 const User = mongoose.model("user", userSchema);

@@ -5,10 +5,14 @@ const http = require("http");
 const server = http.createServer(app);
 const io = require("socket.io")(server, { cors: { origin: "*" } });
 const db = require("./db");
+const webpush = require("web-push");
+const { private_key, public_key } = require("./constants");
 
 const user = require("./models/user");
 
 db();
+
+webpush.setVapidDetails("mailto:akinleyejoshua.dev@gmail.com", public_key, private_key);
 
 let onCalls = {};
 
@@ -27,6 +31,23 @@ io.sockets.on("error", (e) => console.log(e));
 io.sockets.on("connection", (socket) => {
   try {
     console.log(`Client connected: ${socket.id}`);
+
+    socket.on("webpush:sub:set", async ({ to, body }) => {
+      await user.findOne({ loginId: to }).updateOne({ pushSubscription: body });
+    });
+
+    socket.on("webpush:sub:send", async ({ to, payload }) => {
+      const sub = await user.findOne({ loginId: to });
+      const data = JSON.stringify(payload);
+      webpush
+        .sendNotification(JSON.parse(sub.pushSubscription), data)
+        .then(() => {
+          console.log(`Sending notification to ${to}`);
+        })
+        .catch((error) => {
+          console.error("Error sending notification:", error);
+        });
+    });
 
     socket.on("user:signin", async (loginId) => {
       const users = await user.findOne({ loginId: loginId.replace(" ", "") });
@@ -200,14 +221,14 @@ io.sockets.on("connection", (socket) => {
       // Remove user from users map
       for (const item of users) {
         io.to(onCalls[item?.loginId]?.from).emit("user:disconnected");
-        io.to(onCalls[item?.loginId]?.to).emit("user:disconnected"); 
+        io.to(onCalls[item?.loginId]?.to).emit("user:disconnected");
       }
-      
-        await user.findOne({ socketId: socket?.id }).updateOne({
-          is_active: false,
-          lastActive: Date.now(),
-        });
-            
+
+      await user.findOne({ socketId: socket?.id }).updateOne({
+        is_active: false,
+        lastActive: Date.now(),
+      });
+
       // Broadcast updated user list
       io.emit("users:get", await user.find());
     });
